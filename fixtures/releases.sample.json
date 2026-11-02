@@ -1,0 +1,8 @@
+[
+  {"tag_name":"alpha-2610","name":"spark alpha-2610","prerelease":true,"draft":false,"published_at":"2026-10-28T20:00:00Z","html_url":"https://github.com/what3var/fire/releases","assets":[
+    {"name":"spark-alpha-2610-setup.exe","size":48200000,"browser_download_url":"https://github.com/what3var/fire/releases"},
+    {"name":"spark-alpha-2610-linux-x64.tar.gz","size":52100000,"browser_download_url":"https://github.com/what3var/fire/releases"},
+    {"name":"spark-alpha-2610-osx-arm64.zip","size":50900000,"browser_download_url":"https://github.com/what3var/fire/releases"}]},
+  {"tag_name":"alpha-2609","name":"spark alpha-2609","prerelease":true,"draft":false,"published_at":"2026-09-30T20:00:00Z","html_url":"https://github.com/what3var/fire/releases","assets":[]},
+  {"tag_name":"alpha-2608","name":"spark alpha-2608","prerelease":true,"draft":false,"published_at":"2026-08-21T20:00:00Z","html_url":"https://github.com/what3var/fire/releases","assets":[]}
+]

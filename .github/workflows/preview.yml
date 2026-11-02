@@ -1,0 +1,42 @@
+# Builds the website from any branch except main without publishing it.
+# The result is attached to the run as the artifact "site-preview":
+# download, unzip, run `python3 -m http.server` in the folder.
+name: preview
+
+on:
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: what3var/fire
+          path: fire
+          sparse-checkout: |
+            docs
+            screenshots
+            src/fire.Editor/Help
+            src/fire.Project/Samples
+            logosources
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+        env:
+          FIRE_DIR: fire
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-preview
+          path: dist
+          retention-days: 14
