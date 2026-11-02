@@ -36,13 +36,13 @@
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --bg: #fbf9fd; --bg-2: #f4f0f8; --surface: #fff; --surface-2: #f3eef8; --border: #e4dcec;
+    --bg: #ecebf0; --bg-2: #e4e2e9; --surface: #fff; --surface-2: #f5f3f8; --border: #d7d2de; --topbar-bg: rgba(255, 255, 255, .74);
     --text: #1d1726; --muted: #5f5670; --faint: #958ca5; --accent: #e0245a; --accent-2: #a313a3;
     --code-bg: #1b1723; --shadow: 0 20px 50px -24px rgba(60, 20, 80, .35); color-scheme: light;
   }
 }
 :root[data-theme="light"] {
-  --bg: #fbf9fd; --bg-2: #f4f0f8; --surface: #fff; --surface-2: #f3eef8; --border: #e4dcec;
+  --bg: #ecebf0; --bg-2: #e4e2e9; --surface: #fff; --surface-2: #f5f3f8; --border: #d7d2de; --topbar-bg: rgba(255, 255, 255, .74);
   --text: #1d1726; --muted: #5f5670; --faint: #958ca5; --accent: #e0245a; --accent-2: #a313a3;
   --code-bg: #1b1723; --shadow: 0 20px 50px -24px rgba(60, 20, 80, .35); color-scheme: light;
 }
@@ -88,7 +88,7 @@ code, kbd, pre { font-family: var(--mono); }
 /* ---------- top bar ---------- */
 .topbar {
   position: sticky; top: 0; z-index: 50; backdrop-filter: saturate(160%) blur(14px);
-  background: color-mix(in srgb, var(--bg) 78%, transparent); border-bottom: 1px solid var(--border);
+  background: var(--topbar-bg, color-mix(in srgb, var(--bg) 78%, transparent)); border-bottom: 1px solid var(--border);
 }
 .topbar-inner { max-width: 1400px; margin: 0 auto; height: 62px; padding: 0 20px; display: flex; align-items: center; gap: 28px; }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 800; font-size: 1.3rem; letter-spacing: -.02em; }
@@ -432,3 +432,7 @@ dialog::backdrop { background: rgba(10, 6, 16, .72); backdrop-filter: blur(4px);
 .note { margin: 16px 2px 0; color: var(--muted); font-size: .92rem; }
 .page-head h1:last-child { margin-bottom: 0; }
 .card .code pre { font-size: .8rem; padding: 16px 18px; }
+
+/* light theme: the grey page needs a slightly stronger hero grid */
+:root[data-theme="light"] .hero::before { opacity: .85; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .hero::before { opacity: .85; } }
