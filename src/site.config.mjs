@@ -9,14 +9,18 @@ export const site = {
   url: "", // set to the final domain once known, e.g. "https://fire-lang.dev"
   author: "David Müller",
   license: "MIT",
+  bugUrl: "https://github.com/what3var/fire/issues/new",
 };
 
 export const nav = [
-  { label: "Features", href: "index.html#features" },
-  { label: "Screenshots", href: "index.html#screenshots" },
+  { label: "Explore", href: "explore.html" },
+  { label: "News", href: "news.html" },
   { label: "Docs", href: "docs/index.html" },
   { label: "Download", href: "download.html" },
 ];
+
+// how many news entries the home page shows (all of them are on news.html)
+export const newsOnHome = 5;
 
 // The four parts of the toolchain, shown as the "family" strip on the landing page.
 export const toolchain = [

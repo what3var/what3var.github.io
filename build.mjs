@@ -13,6 +13,7 @@ import { Marked } from "marked";
 import hljs from "highlight.js";
 import { site, docSections, screenshots, features, heroSlides } from "./src/site.config.mjs";
 import * as T from "./src/templates.mjs";
+import { loadNews } from "./src/news.mjs";
 
 const ROOT = path.dirname(new URL(import.meta.url).pathname);
 const DIST = path.join(ROOT, "dist");
@@ -188,8 +189,17 @@ async function main() {
 
   // landing + download
   const releases = await fetchReleases();
-  write("index.html", T.home({ features, screenshots, latest: releases[0], fireRoot: src }));
-  write("download.html", T.download({ releases }));
+  // the version on the buttons: the latest release, or the version of the
+  // installer script in fire while the release lookup is not available
+  const setup = path.join(src, "setup.iss");
+  const version = releases[0]?.tag_name
+    ?? (fs.existsSync(setup) && fs.readFileSync(setup, "utf8").match(/#define\s+MyAppVersion\s+"([^"]+)"/)?.[1])
+    ?? "alpha";
+  const news = loadNews(path.join(ROOT, "news"), releases, new Marked({ gfm: true }));
+  write("index.html", T.home({ version, news, fireRoot: src }));
+  write("explore.html", T.explore({ version, features, screenshots }));
+  write("news.html", T.newsPage({ news }));
+  write("download.html", T.download({ releases, version }));
   // 404.html is served for any path, so it needs absolute links. BASE_PATH is
   // the URL prefix of the site, e.g. "/fire/" on GitHub Pages.
   const base = (process.env.BASE_PATH || "/").replace(/\/?$/, "/");
@@ -202,7 +212,7 @@ async function main() {
   }));
   write("assets/search-index.json", JSON.stringify(index));
 
-  console.log(`✓ built ${pages.length} doc pages, ${releases.length} releases → dist/`);
+  console.log(`✓ built ${pages.length} doc pages, ${releases.length} releases, ${news.length} news (version ${version}) → dist/`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

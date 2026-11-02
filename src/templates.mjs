@@ -1,7 +1,7 @@
 import path from "node:path";
 import hljs from "highlight.js";
 import fs from "node:fs";
-import { site, nav, toolchain, heroSlides, heroInterval } from "./site.config.mjs";
+import { site, nav, toolchain, heroSlides, heroInterval, newsOnHome } from "./site.config.mjs";
 import { biscuitSvg } from "./biscuit.mjs";
 
 export const esc = (s = "") => String(s)
@@ -34,6 +34,8 @@ const ICONS = {
   search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
   menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
   arrow: '<path d="M5 12h14m-6-6 6 6-6 6"/>',
+  bug: '<path d="M8 8V6a4 4 0 0 1 8 0v2"/><rect x="7" y="8" width="10" height="12" rx="5"/><path d="M12 12v8M3 13h4M17 13h4M4 19l3-2M20 19l-3-2M4 7l3 2M20 7l-3 2"/>',
+  compass: '<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/>',
 };
 export const icon = (name, cls = "icon") =>
   `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] ?? ""}</svg>`;
@@ -68,6 +70,7 @@ function layout({ out, title, description = site.tagline, body, active = "", bod
     <nav class="mainnav" id="mainnav">${links}</nav>
     <div class="topbar-tools">
       <button class="search-btn" type="button" data-search-open aria-label="Search docs">${icon("search")}<span>Search</span><kbd>/</kbd></button>
+      <a class="bug-btn" href="${site.bugUrl}" title="Report a bug on GitHub">${icon("bug")}<span>Report bug</span></a>
       <button class="theme-btn" type="button" data-theme-toggle aria-label="Toggle colour theme"><span class="sun">☀</span><span class="moon">☾</span></button>
       <a class="gh" href="${site.repoUrl}" aria-label="fire on GitHub">${icon("github")}</a>
       <button class="menu-btn" type="button" data-menu aria-label="Menu" aria-controls="mainnav" aria-expanded="false">${icon("menu")}</button>
@@ -84,6 +87,7 @@ ${body}
       <a href="${r}docs/index.html">Docs</a>
       <a href="${r}download.html">Download</a>
       <a href="${site.repoUrl}">GitHub</a>
+      <a href="${r}news.html">News</a>
       <a href="${site.repoUrl}/issues">Issues</a>
     </nav>
   </div>
@@ -132,17 +136,23 @@ function insetWindow(inset, fireRoot) {
   return `<div class="window window-inset"><div class="window-bar"><span></span><span></span><span></span><em>${esc(inset.file)}</em></div><div class="inset-body">${body}</div></div>`;
 }
 
-export function home({ features, screenshots, latest, fireRoot }) {
-  const out = "index.html";
-  const version = latest ? latest.tag_name : "alpha";
-  const shots = screenshots.map((s, i) => `
-      <figure class="shot${i === 0 ? " shot-wide" : ""}">
-        <button type="button" class="shot-btn" data-lightbox="${i}">
-          <img src="assets/shots/${path.basename(s.file)}" alt="${esc(s.title)}" loading="lazy" width="1917" height="1005">
-        </button>
-        <figcaption><strong>${esc(s.title)}</strong> ${esc(s.text)}</figcaption>
-      </figure>`).join("");
+// the news as a timeline; `full` shows the whole text (news page), otherwise the teaser
+export function newsList(entries, { full = false, out = "index.html" } = {}) {
+  const newsUrl = rel(out, "news.html");
+  return `<ol class="news-list">${entries.map((n) => `
+    <li class="news-item" id="${esc(n.slug)}">
+      <time datetime="${n.date}">${fmtDate(n.date)}</time>
+      <article>
+        ${n.tag ? `<span class="news-tag">${esc(n.tag)}</span>` : ""}
+        <h3>${full ? "" : `<a href="${newsUrl}#${esc(n.slug)}">`}${esc(n.title)}${full ? "" : "</a>"}</h3>
+        ${full ? `<div class="prose news-body">${n.html}</div>` : `<p>${esc(n.teaser)}</p>`}
+      </article>
+    </li>`).join("")}
+  </ol>`;
+}
 
+export function home({ version, news, fireRoot }) {
+  const out = "index.html";
   const body = `
 <section class="hero" data-hero data-interval="${heroInterval}" aria-roledescription="carousel" aria-label="What fire is about">
   <div class="hero-glow" aria-hidden="true"></div>
@@ -164,8 +174,8 @@ export function home({ features, screenshots, latest, fireRoot }) {
         <button type="button" class="slide-pause" data-pause aria-label="Pause the slides" aria-pressed="false"><span class="i-pause">❚❚</span><span class="i-play">▶</span></button>
       </div>
       <div class="cta">
-        <a class="btn btn-primary" href="download.html">${icon("download")} Download</a>
-        <a class="btn btn-ghost" href="docs/start/first-steps.html">${icon("book")} First steps</a>
+        <a class="btn btn-primary" href="download.html">${icon("download")} Download ${esc(version)}</a>
+        <a class="btn btn-ghost" href="explore.html">${icon("compass")} Explore</a>
       </div>
       <p class="hero-meta">Windows · Linux · macOS — native targets incl. ESP32 &amp; FreeRTOS</p>
     </div>
@@ -185,6 +195,40 @@ export function home({ features, screenshots, latest, fireRoot }) {
     </div>
   </div>
 </section>
+
+<section class="section news" id="news">
+  <div class="wrap news-grid">
+    <header class="section-head news-head">
+      <p class="eyebrow">News</p>
+      <h2>What changed lately.</h2>
+      <p>fire moves fast right now. Here is what is new — the details are in the commits and the docs.</p>
+      <a class="btn btn-ghost" href="news.html">All news ${icon("arrow")}</a>
+    </header>
+    ${news.length ? newsList(news.slice(0, newsOnHome)) : `<p class="muted">No news yet.</p>`}
+  </div>
+</section>`;
+  return layout({ out, title: "fire — a language with its very own character", body, bodyClass: "page-home" });
+}
+
+export function explore({ version, features, screenshots }) {
+  const out = "explore.html";
+  const shots = screenshots.map((s, i) => `
+      <figure class="shot${i === 0 ? " shot-wide" : ""}">
+        <button type="button" class="shot-btn" data-lightbox="${i}">
+          <img src="assets/shots/${path.basename(s.file)}" alt="${esc(s.title)}" loading="lazy" width="1917" height="1005">
+        </button>
+        <figcaption><strong>${esc(s.title)}</strong> ${esc(s.text)}</figcaption>
+      </figure>`).join("");
+
+  const body = `
+<section class="page-head">
+  <div class="wrap">
+    <p class="eyebrow">Explore</p>
+    <h1>Everything that comes with fire</h1>
+    <p class="lead">A language, its compiler, an IDE and a package manager — built to work together, from a script on your desktop to a binary on an ESP32.</p>
+  </div>
+</section>
+
 
 <section class="toolchain">
   <div class="wrap toolchain-grid">
@@ -249,9 +293,10 @@ export function home({ features, screenshots, latest, fireRoot }) {
   <div class="wrap cta-band-inner">
     <img src="assets/logo.svg" alt="" width="36" height="48">
     <div><h2>Just download it and have a look.</h2><p>Things went further than planned. 🔥</p></div>
-    <a class="btn btn-primary" href="download.html">${icon("download")} Get fire</a>
+    <a class="btn btn-primary" href="download.html">${icon("download")} Download ${esc(version)}</a>
   </div>
 </section>
+
 
 <dialog class="lightbox" id="lightbox" aria-label="Screenshot">
   <button class="lb-close" type="button" data-lb-close aria-label="Close">×</button>
@@ -259,7 +304,25 @@ export function home({ features, screenshots, latest, fireRoot }) {
   <figure><img alt=""><figcaption></figcaption></figure>
   <button class="lb-nav lb-next" type="button" data-lb-next aria-label="Next">›</button>
 </dialog>`;
-  return layout({ out, title: "fire — a language with its very own character", body, bodyClass: "page-home" });
+  return layout({ out, title: "Explore — fire", body, active: "explore" });
+}
+
+export function newsPage({ news }) {
+  const out = "news.html";
+  const body = `
+<section class="page-head">
+  <div class="wrap">
+    <p class="eyebrow">News</p>
+    <h1>What's new in fire</h1>
+    <p class="lead">Changes to the language, spark and the packages, newest first. New releases are listed here automatically.</p>
+  </div>
+</section>
+<section class="section section-tight">
+  <div class="wrap news-page">
+    ${news.length ? newsList(news, { full: true, out }) : `<p class="muted">No news yet.</p>`}
+  </div>
+</section>`;
+  return layout({ out, title: "News — fire", body, active: "news" });
 }
 
 // ---------------------------------------------------------------- download
@@ -272,7 +335,7 @@ function platformOf(name) {
 }
 const PLATFORM_LABEL = { windows: "Windows", macos: "macOS", linux: "Linux", file: "Other" };
 
-export function download({ releases }) {
+export function download({ releases, version }) {
   const out = "download.html";
   const [latest, ...older] = releases;
   const releasesUrl = `${site.repoUrl}/releases`;
@@ -294,12 +357,12 @@ export function download({ releases }) {
       <a class="text-link" href="${esc(latest.html_url)}">Release notes on GitHub ${icon("arrow")}</a>
     </article>` : `
     <article class="release release-latest">
-      <header><div><span class="badge">Latest</span><h2>Current release</h2></div></header>
+      <header><div><span class="badge">Latest</span><h2>${esc(version)}</h2></div></header>
       <p>Installers and archives are published as GitHub releases.</p>
       <div class="platforms">
         <span>${icon("windows")} Windows installer</span><span>${icon("linux")} Linux</span><span>${icon("macos")} macOS</span>
       </div>
-      <a class="btn btn-primary" href="${releasesUrl}/latest">${icon("download")} Go to the latest release</a>
+      <a class="btn btn-primary" href="${releasesUrl}/latest">${icon("download")} Download ${esc(version)}</a>
     </article>`;
 
   const olderList = older.length ? `
