@@ -23,7 +23,7 @@ fixtures/              sample release data to preview the download page offline
 | `/explore.html` | toolchain, features, screenshots (`src/site.config.mjs`, `screenshots/` of fire) |
 | `/news.html` | all entries of `news/` + the GitHub releases of fire |
 | `/download.html` | GitHub releases of `what3var/fire`, fetched **at build time** |
-| `/docs/…` | `docs/language/*.md`, `docs/*.md`, `src/fire.Editor/Help/*.md` of fire |
+| `/docs/…` | `docs/README.md`, `docs/language/*.md`, the topic folders of `docs/` (ui, graphics, networking, …), `src/fire.Editor/Help/*.md` of fire |
 
 The docs are not copied into this repository. Every build takes them from the default branch of `what3var/fire`.
 

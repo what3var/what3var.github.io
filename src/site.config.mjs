@@ -25,7 +25,7 @@ export const newsOnHome = 5;
 // The four parts of the toolchain, shown as the "family" strip on the landing page.
 export const toolchain = [
   { name: "fire", role: "the language", text: "C#-like syntax with its own ideas: units, ownership, actors, probes." },
-  { name: "forge", role: "the compiler", text: "Bytecode for the VM, or C++ for native binaries on your own toolchain." },
+  { name: "forge", role: "the compiler", text: "Bytecode for the VM, or C for small, fast native binaries on your own toolchain." },
   { name: "spark", role: "the IDE", text: "A small VS-style editor with debugger, designer and device panel." },
   { name: "ember", role: "the package manager", text: "Source-only packages, built all at once. No precompiled blobs." },
 ];
@@ -34,7 +34,7 @@ export const features = [
   { icon: "units", title: "Numbers with units", text: "5mm + 2cm is 25mm. Units are part of the value - converted, checked and printed." },
   { icon: "own", title: "Ownership, not GC", text: "Every object has an owner. Lifetimes are explicit, deletes are deterministic." },
   { icon: "threads", title: "Threads without races", text: "No shared memory: threads work on copies (taking / sync) or talk to actors." },
-  { icon: "native", title: "Native everywhere", text: "Translated to C++ for Windows, Linux, macOS, ESP32 and FreeRTOS." },
+  { icon: "native", title: "Native everywhere", text: "Translated to plain C for Windows, Linux, macOS, the browser, ESP32 and FreeRTOS - debuggable from spark." },
   { icon: "embed", title: "Embeddable in .NET", text: "Host scripts in your own C# application; the VM runs them in-process." },
   { icon: "devices", title: "Made for devices", text: "Serial, USB and simulated devices are first-class - it started as a device control suite." },
 ];
@@ -131,12 +131,17 @@ export const screenshots = [
 ];
 
 // Documentation sections. Files are paths inside the fire repository;
-// "glob" takes every .md in a folder (sorted by name).
+// "glob" takes every .md in a folder (sorted by name, README first).
+// The docs of fire are sorted into folders by topic (docs/README.md is the map).
+const topic = (id, title) => ({ id, title, glob: `docs/${id}`, slugs: { README: "index" }, titles: { README: "Overview" } });
+
 export const docSections = [
   {
     id: "start",
     title: "Getting started",
-    files: ["src/fire.Editor/Help/First Steps.md", "src/fire.Editor/Help/Embedding.md"],
+    files: ["docs/README.md", "src/fire.Editor/Help/First Steps.md", "src/fire.Editor/Help/Embedding.md"],
+    slugs: { README: "overview" },
+    titles: { README: "The documentation" },
   },
   {
     id: "language",
@@ -145,11 +150,17 @@ export const docSections = [
     slugs: { README: "index" },
     titles: { README: "Overview" },
   },
-  {
-    id: "topics",
-    title: "Libraries & tools",
-    glob: "docs",
-    // internal design notes / not (yet) English - left out of the site for now
-    exclude: ["BYTECODE.md", "DESIGN_LAMBDA_REFLECTION_PROBE.md", "THREADING_DESIGN.md", "NAMING.md", "SPEC.md"],
-  },
+  topic("ui", "User interfaces"),
+  topic("graphics", "Graphics and 3D"),
+  topic("networking", "Networking"),
+  topic("ai", "AI"),
+  topic("audio", "Audio"),
+  topic("circuits", "Circuits"),
+  topic("devices", "Devices"),
+  topic("data", "Data"),
+  { ...topic("stdlib", "Standard library") },
+  topic("packages", "Packages"),
+  topic("libraries", "Libraries"),
+  topic("targets", "Targets"),
+  topic("tools", "Tools"),
 ];

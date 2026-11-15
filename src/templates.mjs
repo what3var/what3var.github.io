@@ -448,7 +448,19 @@ export function docsIndex({ sections }) {
   const blurbs = {
     start: "A tour of spark and the language, and how to host fire in your own .NET application.",
     language: "One page per topic, with examples that run as they are and a few exercises.",
-    topics: "Libraries you #import, packages, projects, devices, UI markup and the toolchain.",
+    ui: "Windows, controls, layout, styles, markup (.fxml), docking and dialogs.",
+    graphics: "Framebuffers and drawing, fonts, 3D scenes, models, terrains, effects and physics.",
+    networking: "TCP and UDP, HTTP servers and clients, TLS, MCP and WiFi.",
+    ai: "A small language model on the CPU, the models, agents with tools - and spark's assistant.",
+    audio: "Sound output and input, tracker modules.",
+    circuits: "Simulate circuits, draw schematics, use them as objects in your code.",
+    devices: "The device framework, GPIO, I2C, SPI and USB.",
+    data: "Databases, the data model and its designer.",
+    stdlib: "Files, streams, console, JSON, hashes, compression, processes, resources.",
+    packages: "Using packages with ember, and packages with natives in C.",
+    libraries: "Libraries and plugins, with or without natives.",
+    targets: "Native builds for Windows, Linux, macOS, the browser, ESP32 and FreeRTOS.",
+    tools: "spark, forge, projects, testing, git, templates and the error codes.",
   };
   const body = `
 <section class="page-head">
