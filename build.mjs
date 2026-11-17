@@ -65,6 +65,22 @@ function slugify(text) {
     .replace(/\s/g, "-");
 }
 
+// a fenced code block: highlighted, with a copy button (docs and news)
+function renderCode({ text, lang }) {
+  const language = (lang || "").trim().toLowerCase();
+  const grammar = language === "fire" ? "csharp" : language;
+  const body = grammar && hljs.getLanguage(grammar)
+    ? (language === "fire" ? T.fireKeywords : (h) => h)(hljs.highlight(text, { language: grammar }).value)
+    : T.esc(text);
+  const label = language ? `<span class="code-lang">${T.esc(language)}</span>` : "";
+  return `<div class="code">${label}<button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code class="hljs">${body}</code></pre></div>\n`;
+}
+
+// tables scroll inside their own box instead of widening the page
+const wrapTables = (html) => html
+  .replace(/<table>/g, '<div class="table-wrap"><table>')
+  .replace(/<\/table>/g, "</table></div>");
+
 function makeMarked(page, pageBySource) {
   const seen = new Map();
   const toc = [];
@@ -80,15 +96,7 @@ function makeMarked(page, pageBySource) {
         if (depth === 2 || depth === 3) toc.push({ id, depth, html });
         return `<h${depth} id="${id}"><a class="anchor" href="#${id}" aria-hidden="true">#</a>${html}</h${depth}>\n`;
       },
-      code({ text, lang }) {
-        const language = (lang || "").trim().toLowerCase();
-        const grammar = language === "fire" ? "csharp" : language;
-        const body = grammar && hljs.getLanguage(grammar)
-          ? (language === "fire" ? T.fireKeywords : (h) => h)(hljs.highlight(text, { language: grammar }).value)
-          : T.esc(text);
-        const label = language ? `<span class="code-lang">${T.esc(language)}</span>` : "";
-        return `<div class="code">${label}<button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code class="hljs">${body}</code></pre></div>\n`;
-      },
+      code: renderCode,
       link({ href, title, tokens }) {
         const text = this.parser.parseInline(tokens);
         const resolved = resolveHref(href, page, pageBySource);
@@ -176,9 +184,7 @@ async function main() {
   // render doc pages
   pages.forEach((page, i) => {
     const { md, toc } = makeMarked(page, pageBySource);
-    const body = md.parse(page.raw)
-      .replace(/<table>/g, '<div class="table-wrap"><table>')
-      .replace(/<\/table>/g, "</table></div>");
+    const body = wrapTables(md.parse(page.raw));
     write(page.out, T.docPage({
       page, body, toc, sections: docSections,
       prev: pages[i - 1], next: pages[i + 1],
@@ -195,7 +201,10 @@ async function main() {
   const version = releases[0]?.tag_name
     ?? (fs.existsSync(setup) && fs.readFileSync(setup, "utf8").match(/#define\s+MyAppVersion\s+"([^"]+)"/)?.[1])
     ?? "alpha";
-  const news = loadNews(path.join(ROOT, "news"), releases, new Marked({ gfm: true }));
+  // news get the code blocks and tables of the docs
+  const newsMd = new Marked({ gfm: true });
+  newsMd.use({ renderer: { code: renderCode } });
+  const news = loadNews(path.join(ROOT, "news"), releases, { parse: (text) => wrapTables(newsMd.parse(text)) });
   write("index.html", T.home({ version, news, fireRoot: src }));
   write("explore.html", T.explore({ version, features, screenshots }));
   write("news.html", T.newsPage({ news }));
