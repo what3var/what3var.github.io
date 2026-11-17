@@ -16,6 +16,7 @@ export const nav = [
   { label: "Explore", href: "explore.html" },
   { label: "News", href: "news.html" },
   { label: "Docs", href: "docs/index.html" },
+  { label: "Packages", href: "packages/index.html" },
   { label: "Download", href: "download.html" },
 ];
 

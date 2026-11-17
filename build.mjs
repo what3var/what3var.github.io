@@ -5,6 +5,8 @@
 //   npm run build               clones github.com/what3var/fire into .cache/fire
 //   FIRE_DIR=/path/to/fire npm run build   uses a local checkout instead
 //   GITHUB_TOKEN=...            optional, raises the rate limit for the release lookup
+//   REGISTRY_DIR=fixtures/registry   the package pages from another registry (default: registry/)
+//   SHOW_DRAFTS=1               also renders the legal pages marked `draft: true` (preview only)
 
 import fs from "node:fs";
 import path from "node:path";
@@ -13,7 +15,9 @@ import { Marked } from "marked";
 import hljs from "highlight.js";
 import { site, docSections, screenshots, features, heroSlides } from "./src/site.config.mjs";
 import * as T from "./src/templates.mjs";
-import { loadNews } from "./src/news.mjs";
+import { loadNews, frontMatter } from "./src/news.mjs";
+import * as P from "./src/packages.mjs";
+import { verifyRegistry, buildIndex, latestVersion, sortedVersions } from "./scripts/registry.mjs";
 
 const ROOT = path.dirname(new URL(import.meta.url).pathname);
 const DIST = path.join(ROOT, "dist");
@@ -136,10 +140,67 @@ function copyDir(from, to) {
   fs.cpSync(from, to, { recursive: true });
 }
 
+// ---------------------------------------------------------------- legal pages
+// legal/*.md with a front matter (title, slug, draft). A page marked `draft: true` is only
+// rendered with SHOW_DRAFTS=1; files without a front matter (notes) are never rendered.
+function loadLegal() {
+  const dir = path.join(ROOT, "legal");
+  if (!fs.existsSync(dir)) return [];
+  const show = process.env.SHOW_DRAFTS === "1";
+  return fs.readdirSync(dir).filter((f) => f.endsWith(".md")).sort().flatMap((f) => {
+    const raw = fs.readFileSync(path.join(dir, f), "utf8");
+    if (!raw.startsWith("---")) return [];
+    const { meta, body } = frontMatter(raw);
+    const draft = meta.draft === "true";
+    if (!meta.title || (draft && !show)) return [];
+    return [{ title: meta.title, draft, body, out: `legal/${meta.slug || path.basename(f, ".md")}.html`, footer: meta.footer !== "false" }];
+  });
+}
+
+// ---------------------------------------------------------------- packages
+// registry/ (or REGISTRY_DIR) → packages/index.json for ember, the files, the overview and a
+// page per package. A registry whose files do not match their hashes stops the build.
+function buildPackages(legal) {
+  const registry = path.resolve(ROOT, process.env.REGISTRY_DIR || "registry");
+  const { entries, errors } = verifyRegistry(registry);
+  if (errors.length) throw new Error(`the registry ${registry} does not verify:\n  ${errors.join("\n  ")}`);
+  const listed = entries.filter((e) => e.versions?.length).sort((a, b) => a.name.localeCompare(b.name));
+
+  // the files Pages serves itself
+  for (const e of listed) for (const v of e.versions) {
+    if (!v.file) continue;
+    const to = path.join(DIST, "packages", v.file);
+    fs.mkdirSync(path.dirname(to), { recursive: true });
+    fs.copyFileSync(path.join(registry, v.file), to);
+  }
+  // the index of ember; the urls are relative to it
+  const generated = new Date().toISOString();
+  const index = buildIndex(listed, { fileUrl: (f) => f, pageUrl: (e) => P.pageOf(e.name), generated });
+  write("packages/index.json", JSON.stringify(index, null, 1));
+  // the address that ember used before 2026-11 (fire-packages/index.json): the same index, its urls one folder up
+  const legacy = buildIndex(listed, { fileUrl: (f) => `../packages/${f}`, pageUrl: (e) => `../packages/${P.pageOf(e.name)}`, generated });
+  write("fire-packages/index.json", JSON.stringify(legacy, null, 1));
+
+  const legalLinks = legal.filter((p) => /packages|terms|nutzung/i.test(p.out));
+  write("packages/index.html", P.packagesIndex({ entries: listed, legal: legalLinks }));
+  for (const entry of listed) {
+    const readmeHtml = entry.readme ? P.renderReadme(entry.readme, renderCode) : "";
+    write(`packages/${P.pageOf(entry.name)}`, P.packagePage({ entry, entries: listed, readmeHtml, legal: legalLinks }));
+  }
+  console.log(`✓ packages: ${listed.length} packages, ${listed.reduce((n, e) => n + e.versions.length, 0)} versions from ${path.relative(ROOT, registry) || "."}`);
+  // for the search of the site
+  return listed.map((e) => {
+    const v = latestVersion(e) ?? sortedVersions(e)[0];
+    return { t: e.name, s: "Packages", u: `packages/${P.pageOf(e.name)}`, h: [v.description || "", ...(v.imports ?? []).map((i) => `#import "${i.name}"`)] };
+  });
+}
+
 async function main() {
   const src = fireSource();
   fs.rmSync(DIST, { recursive: true, force: true });
   fs.mkdirSync(DIST, { recursive: true });
+  const legal = loadLegal();
+  site.legalLinks = legal.filter((p) => p.footer);
 
   // static assets of the site itself + images from the fire repo
   copyDir(path.join(ROOT, "src", "assets"), path.join(DIST, "assets"));
@@ -214,14 +275,20 @@ async function main() {
   const base = (process.env.BASE_PATH || "/").replace(/\/?$/, "/");
   write("404.html", T.notFound(base));
 
+  // packages and the legal pages
+  const packageSearch = buildPackages(legal);
+  const legalMd = new Marked({ gfm: true });
+  legalMd.use({ renderer: { code: renderCode } });
+  for (const page of legal) write(page.out, P.legalPage({ page, html: wrapTables(legalMd.parse(page.body)) }));
+
   // search index for the client-side doc search (static JSON, no server)
   const index = pages.map((p) => ({
     t: p.title, s: p.section.title, u: p.out,
     h: [...p.raw.matchAll(/^#{2,3}\s+(.+)$/gm)].map((m) => m[1].replace(/`/g, "")),
-  }));
+  })).concat(packageSearch);
   write("assets/search-index.json", JSON.stringify(index));
 
-  console.log(`✓ built ${pages.length} doc pages, ${releases.length} releases, ${news.length} news (version ${version}) → dist/`);
+  console.log(`✓ built ${pages.length} doc pages, ${releases.length} releases, ${news.length} news, ${legal.length} legal pages (version ${version}) → dist/`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

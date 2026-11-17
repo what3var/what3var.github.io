@@ -244,3 +244,20 @@
     if ((e.key === "/" && !typing) || ((e.metaKey || e.ctrlKey) && e.key === "k")) { e.preventDefault(); open(); }
   });
 })();
+
+// package overview: filters the list as you type (every package is in the HTML); ?q= fills the filter
+(() => {
+  const input = document.querySelector("[data-pkg-filter]");
+  if (!input) return;
+  const rows = [...document.querySelectorAll("[data-pkg]")];
+  const none = document.querySelector("[data-pkg-none]");
+  const apply = () => {
+    const words = input.value.toLowerCase().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    rows.forEach((r) => { const hit = words.every((w) => r.dataset.pkg.includes(w)); r.hidden = !hit; if (hit) shown++; });
+    if (none) none.hidden = shown > 0;
+  };
+  input.addEventListener("input", apply);
+  const q = new URLSearchParams(location.search).get("q");
+  if (q) { input.value = q; apply(); }
+})();

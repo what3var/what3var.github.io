@@ -1,0 +1,26 @@
+{
+  "name": "colorkit",
+  "versions": [
+    {
+      "version": "0.3.0",
+      "file": "files/colorkit/colorkit-0.3.0.fpk",
+      "sha256": "72d0266fe8833dc427d70aca21bf85683a6180224587b37c52c25e65ed0e0169",
+      "size": 895,
+      "published": "2026-11-17",
+      "author": "Example Author",
+      "description": "Colour mixing and palettes in pure fire.",
+      "license": "Apache-2.0",
+      "homepage": "https://example.com/colorkit",
+      "dependencies": [
+        "mathkit"
+      ],
+      "imports": [
+        {
+          "name": "colorkit",
+          "prelude": true
+        }
+      ]
+    }
+  ],
+  "source": "https://example.com/src/colorkit"
+}

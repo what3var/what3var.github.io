@@ -41,7 +41,7 @@ export const icon = (name, cls = "icon") =>
   `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] ?? ""}</svg>`;
 
 // ---------------------------------------------------------------- layout
-function layout({ out, title, description = site.tagline, body, active = "", bodyClass = "", rootPrefix }) {
+export function layout({ out, title, description = site.tagline, body, active = "", bodyClass = "", rootPrefix }) {
   const r = rootPrefix ?? root(out);
   const links = nav.map((n) => {
     const on = active && n.href.startsWith(active);
@@ -86,9 +86,11 @@ ${body}
     <nav>
       <a href="${r}docs/index.html">Docs</a>
       <a href="${r}download.html">Download</a>
+      <a href="${r}packages/index.html">Packages</a>
       <a href="${site.repoUrl}">GitHub</a>
       <a href="${r}news.html">News</a>
-      <a href="${site.repoUrl}/issues">Issues</a>
+      <a href="${site.repoUrl}/issues">Issues</a>${(site.legalLinks ?? []).map((l) => `
+      <a href="${r}${l.out}">${esc(l.title)}</a>`).join("")}
     </nav>
   </div>
 </footer>

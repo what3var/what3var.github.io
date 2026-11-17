@@ -10,11 +10,15 @@ The site is fully static. A small Node script turns the docs of the fire reposit
 build.mjs              generator: read fire → render docs → write dist/
 src/site.config.mjs    content & structure: nav, hero slides, features, screenshots, doc sections
 src/templates.mjs      page templates (layout, home, download, docs)
+src/packages.mjs       the package pages and the legal pages
 src/biscuit.mjs        draws a .biscuit circuit as SVG (hero slide)
 src/assets/            style.css, main.js, logo.svg
 public/                copied 1:1 into dist/ (favicon, CNAME …)
-fixtures/              sample release data to preview the download page offline
-.github/workflows/     pages.yml publishes main, preview.yml builds every other branch
+registry/              the package registry of ember (registry/README.md)
+scripts/               registry.mjs, publish-package.mjs, verify-registry.mjs
+legal/                 drafts: terms of the registry, privacy, imprint (rendered only with draft: false); ANALYSE.md is a note
+fixtures/              sample release data and a sample registry to preview offline
+.github/workflows/     pages.yml publishes main, preview.yml builds every other branch, publish-package.yml adds a package
 ```
 
 | Page | Source |
@@ -23,6 +27,7 @@ fixtures/              sample release data to preview the download page offline
 | `/explore.html` | toolchain, features, screenshots (`src/site.config.mjs`, `screenshots/` of fire) |
 | `/news.html` | all entries of `news/` + the GitHub releases of fire |
 | `/download.html` | GitHub releases of `what3var/fire`, fetched **at build time** |
+| `/packages/…` | the package registry: `registry/` → `index.json` for ember, the files, an overview and a page per package ([registry/README.md](registry/README.md)) |
 | `/docs/…` | `docs/README.md`, `docs/language/*.md`, the topic folders of `docs/` (ui, graphics, networking, …), `src/fire.Editor/Help/*.md` of fire |
 
 The docs are not copied into this repository. Every build takes them from the default branch of `what3var/fire`.

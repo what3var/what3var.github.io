@@ -13,7 +13,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-function frontMatter(raw) {
+export function frontMatter(raw) {
   const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
   if (!m) return { meta: {}, body: raw };
   const meta = {};

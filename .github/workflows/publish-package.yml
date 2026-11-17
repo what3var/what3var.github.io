@@ -1,0 +1,116 @@
+# Adds a package to the registry (registry/README.md) - started by hand by the maintainer:
+# Actions → publish-package → Run workflow. Only people with write access to this repository can
+# start it. It needs no secrets: the GITHUB_TOKEN of the run commits to main, uploads release
+# assets (storage: release) and starts the pages workflow (a push made with the GITHUB_TOKEN
+# does not start other workflows by itself; a workflow_dispatch does).
+#
+# Settings → Actions → General → Workflow permissions must allow "Read and write permissions"
+# (or keep "Read" there: the permissions below ask for what this workflow needs).
+name: publish-package
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_url:
+        description: "https address of the .fpk (e.g. a release asset of the author)"
+        required: true
+      sha256:
+        description: "SHA-256 of the file as the author published it"
+        required: true
+      source:
+        description: "where the source code is (repository)"
+        required: true
+      storage:
+        description: "where the file is kept"
+        type: choice
+        options: [pages, release]
+        default: pages
+      allow_license:
+        description: "publish a licence that is not on the list (you read it)"
+        type: boolean
+        default: false
+      dry_run:
+        description: "only check, change nothing"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: publish-package
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download and check
+        id: fetch
+        env:
+          PACKAGE_URL: ${{ inputs.package_url }}
+          SHA256: ${{ inputs.sha256 }}
+        run: |
+          case "$PACKAGE_URL" in https://*) ;; *) echo "only https addresses" >&2; exit 1;; esac
+          mkdir -p "$RUNNER_TEMP/pkg"
+          name="$(basename "${PACKAGE_URL%%\?*}")"
+          case "$name" in *.fpk) ;; *) name="package.fpk";; esac
+          curl --fail --location --proto '=https' --max-filesize 104857600 -o "$RUNNER_TEMP/pkg/$name" "$PACKAGE_URL"
+          echo "$SHA256  $RUNNER_TEMP/pkg/$name" | sha256sum --check
+          echo "file=$RUNNER_TEMP/pkg/$name" >> "$GITHUB_OUTPUT"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+      - name: Check the package
+        env:
+          FILE: ${{ steps.fetch.outputs.file }}
+          SHA256: ${{ inputs.sha256 }}
+          SOURCE: ${{ inputs.source }}
+          ALLOW: ${{ inputs.allow_license && '--allow-license' || '' }}
+        run: node scripts/publish-package.mjs "$FILE" --sha256 "$SHA256" --source "$SOURCE" $ALLOW --dry-run
+      - name: Upload as a release asset
+        if: ${{ inputs.storage == 'release' && !inputs.dry_run }}
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FILE: ${{ steps.fetch.outputs.file }}
+        run: |
+          pkg="$(unzip -p "$FILE" package.json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const m=JSON.parse(s);console.log(m.name+" "+m.version)})')"
+          read -r name version <<< "$pkg"
+          asset="$name-$version.fpk"
+          cp "$FILE" "$RUNNER_TEMP/$asset"
+          gh release view "pkg-$name" >/dev/null 2>&1 || gh release create "pkg-$name" --title "$name" --notes "Package files of $name (fire package registry)." --latest=false
+          gh release upload "pkg-$name" "$RUNNER_TEMP/$asset"
+          echo "url=https://github.com/${{ github.repository }}/releases/download/pkg-$name/$asset" >> "$GITHUB_OUTPUT"
+      - name: Publish
+        if: ${{ !inputs.dry_run }}
+        env:
+          FILE: ${{ steps.fetch.outputs.file }}
+          SHA256: ${{ inputs.sha256 }}
+          SOURCE: ${{ inputs.source }}
+          ALLOW: ${{ inputs.allow_license && '--allow-license' || '' }}
+          URL: ${{ steps.release.outputs.url }}
+        run: |
+          node scripts/publish-package.mjs "$FILE" --sha256 "$SHA256" --source "$SOURCE" $ALLOW ${URL:+--url "$URL"}
+          node scripts/verify-registry.mjs
+      - name: Commit and deploy
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PACKAGE_URL: ${{ inputs.package_url }}
+          SHA256: ${{ inputs.sha256 }}
+          SOURCE: ${{ inputs.source }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add registry
+          if git diff --cached --quiet; then echo "nothing changed"; exit 0; fi
+          title="$(git diff --cached --name-only registry/packages | grep '\.json$' | xargs -n1 basename | sed 's/\.json$//' | paste -sd, -)"
+          git commit -m "packages: publish $title" -m "From: $PACKAGE_URL" -m "SHA-256: $SHA256" -m "Source: $SOURCE" -m "Started by: ${{ github.actor }}"
+          git push origin HEAD:main
+          gh workflow run pages.yml --ref main

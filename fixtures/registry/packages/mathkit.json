@@ -1,0 +1,65 @@
+{
+  "name": "mathkit",
+  "versions": [
+    {
+      "version": "1.0.0",
+      "file": "files/mathkit/mathkit-1.0.0.fpk",
+      "sha256": "3debdd7924ef2b761499983ad010ede1b13d23ded98859fe22eab0b67a064dda",
+      "size": 2462,
+      "published": "2026-11-17",
+      "author": "Your Name",
+      "description": "Example: a class in fire and a C++ native (hypot) for the native backend.",
+      "license": "MIT",
+      "homepage": "https://example.com/mathkit",
+      "dependencies": [],
+      "imports": [
+        {
+          "name": "mathkit",
+          "prelude": true,
+          "native": "c++"
+        }
+      ]
+    },
+    {
+      "version": "1.1.0",
+      "file": "files/mathkit/mathkit-1.1.0.fpk",
+      "sha256": "62d3591ed0dc13a40881573be08136943cc10e1b87205a9ea7473b07a4ede6e4",
+      "size": 2462,
+      "published": "2026-11-17",
+      "author": "Your Name",
+      "description": "Example: a class in fire and a C++ native (hypot) for the native backend.",
+      "license": "MIT",
+      "homepage": "https://example.com/mathkit",
+      "dependencies": [],
+      "imports": [
+        {
+          "name": "mathkit",
+          "prelude": true,
+          "native": "c++"
+        }
+      ]
+    },
+    {
+      "version": "1.2.0",
+      "file": "files/mathkit/mathkit-1.2.0.fpk",
+      "sha256": "7330d081d2e26d67f242ed6e4b17bb25186fa030d6f32a9a2e540b7299139e61",
+      "size": 2462,
+      "published": "2026-11-17",
+      "author": "Your Name",
+      "description": "Example: a class in fire and a C++ native (hypot) for the native backend.",
+      "license": "MIT",
+      "homepage": "https://example.com/mathkit",
+      "dependencies": [],
+      "imports": [
+        {
+          "name": "mathkit",
+          "prelude": true,
+          "native": "c++"
+        }
+      ],
+      "yanked": true,
+      "yankedReason": "the native does not build on Windows"
+    }
+  ],
+  "source": "https://example.com/src/mathkit"
+}
