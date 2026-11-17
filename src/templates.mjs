@@ -518,11 +518,6 @@ export function docPage({ page, body, toc, sections, prev, next, editUrl }) {
 
 export function docsIndex({ sections }) {
   const out = "docs/index.html";
-  const blurbs = {
-    start: "A tour of spark and the language, and how to host fire in your own .NET application.",
-    language: "One page per topic, with examples that run as they are and a few exercises.",
-    topics: "Libraries you #import, packages, projects, devices, UI markup and the toolchain.",
-  };
   const body = `
 <section class="page-head">
   <div class="wrap">
@@ -536,7 +531,7 @@ export function docsIndex({ sections }) {
     ${sections.map((s) => `
     <article class="doc-card">
       <h2>${esc(s.title)}</h2>
-      <p>${blurbs[s.id] ?? ""}</p>
+      <p>${esc(s.blurb ?? "")}</p>
       <ul>${s.pages.map((p) => `<li><a href="${rel(out, p.out)}">${esc(p.title)}</a></li>`).join("")}</ul>
     </article>`).join("")}
   </div>

@@ -218,24 +218,30 @@ export const screenshots = [
 
 // Documentation sections. Files are paths inside the fire repository;
 // "glob" takes every .md in a folder (sorted by name).
+// One section per folder of fire's docs/, in the order of docs/README.md.
+// The README of a folder becomes its index.html ("Overview"). docs/spec (the
+// internals) and docs/images stay off the site.
+const folder = (id, title, blurb) => ({ id, title, blurb, glob: `docs/${id}`, slugs: { README: "index" }, titles: { README: "Overview" } });
+
 export const docSections = [
   {
     id: "start",
     title: "Getting started",
+    blurb: "A tour of spark and the language, and how to host fire in your own .NET application.",
     files: ["src/fire.Editor/Help/First Steps.md", "src/fire.Editor/Help/Embedding.md"],
   },
-  {
-    id: "language",
-    title: "Language reference",
-    glob: "docs/language",
-    slugs: { README: "index" },
-    titles: { README: "Overview" },
-  },
-  {
-    id: "topics",
-    title: "Libraries & tools",
-    glob: "docs",
-    // internal design notes / not (yet) English - left out of the site for now
-    exclude: ["BYTECODE.md", "DESIGN_LAMBDA_REFLECTION_PROBE.md", "THREADING_DESIGN.md", "NAMING.md", "SPEC.md"],
-  },
+  folder("language", "Language reference", "One page per topic, with examples that run as they are and a few exercises."),
+  folder("ui", "User interfaces", "Windows, controls, layout, styles, docking and .fxml markup."),
+  folder("graphics", "Graphics", "Framebuffers and renderers, fonts, 3D scenes, models, terrains, effects and physics."),
+  folder("audio", "Audio", "Sound output and input, tracker modules."),
+  folder("data", "Data", "Databases and the data designer."),
+  folder("circuits", "Circuits", "Simulation, schematics and the circuit editor."),
+  folder("devices", "Devices", "The device framework: GPIO, I2C, SPI and USB."),
+  folder("networking", "Networking", "TCP and UDP, HTTP, TLS, MCP and WiFi."),
+  folder("ai", "AI", "A small language model on the CPU, agents with tools, the assistant of spark."),
+  folder("stdlib", "Standard library", "Files, streams, console, JSON, hashes, compression, processes and more."),
+  folder("packages", "Packages", "Using and building packages with ember, packages with C/C++ natives."),
+  folder("libraries", "Libraries", "Libraries and plugins, with or without natives."),
+  folder("targets", "Targets", "Native builds for Windows, Linux, macOS, the browser, ESP32 and FreeRTOS."),
+  folder("tools", "Tools", "spark, forge on the command line, projects, testing and error codes."),
 ];
