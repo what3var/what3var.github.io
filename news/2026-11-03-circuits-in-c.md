@@ -8,4 +8,4 @@ The circuit simulator now runs on a kernel written in C. It was the last standar
 - **Just as fast.** An RC ladder, a transistor amplifier with diodes and a counter of flip-flops run as fast as before, in the virtual machine and in native programs.
 - **Everything else stays.** Circuits that run in their own thread, sound devices, scopes, FFT, formulas and chips work as they did.
 
-Also new: the project template *Native Library (C)*, next to *Native Library (C++)*. It starts a library whose natives are C (`"language": "c"`). C++ stays open for your own packages - fire just doesn't need it any more for its own. See [Circuits](docs/topics/circuits.html) and [Natives of a package](docs/topics/package-natives.html) in the docs.
+Also new: the project template *Native Library (C)*, next to *Native Library (C++)*. It starts a library whose natives are C (`"language": "c"`). C++ stays open for your own packages - fire just doesn't need it any more for its own. See [Circuits](docs/circuits/index.html) and [Natives of a package](docs/packages/natives.html) in the docs.
