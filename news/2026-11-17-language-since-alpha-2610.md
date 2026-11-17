@@ -68,6 +68,31 @@ names[new Pos(1, 2)] = "start"
 print(names[new Pos(1, 2)])         // start - the same content
 ```
 
+#### Static fields, `replace`, and a warning for temporaries
+
+- **Static fields are set in the order they need each other**, not in the order they are written. The compiler follows what an initial value reads, also through the static methods, properties and constructors it calls. A cycle is an error that names it (`E4078`: `A.x -> B.y -> (through B.Get()) A.x`). See [Fields, constructors, methods](docs/language/08-classes.html#fields-constructors-methods).
+- **`replace this.f = value`** destroys the old value of a field after the new one is stored - when the object owns it. A plain assignment never destroys anything: fire would have to know that nothing else refers to the old value, and destroying is never implicit. See [`replace`](docs/language/13-ownership.html#replace).
+- **The type checker warns (`TC031`)** when a temporary or a value passed with `take` goes into a constructor or method that only keeps a reference to it - it would die with the call, and the field would refer to a destroyed object.
+
+```fire
+class Grid {
+    static int width = Config.tile * 4      // reads Config.tile - which is set first
+}
+class Config {
+    static int tile = 16
+}
+print(Grid.width)                           // 64
+
+class Cache {
+    int data[]
+    construct() { this.data = [1, 2, 3] }
+    undefined Reset() { replace this.data = [0] }   // the old array is destroyed
+}
+var c = new Cache()
+c.Reset()
+print(c.data.length)                        // 1
+```
+
 #### Conversions are fixed at compile time
 
 `x!`, `x:` and `x:!` take their type and unit from the context. The type checker now knows the result, and where the context is known the compiler fixes the conversion instead of deciding at run time. A declaration, a typed parameter or a return value is a context too. See [The target unit of an operation](docs/language/05-units.html#the-target-unit-of-an-operation-advanced).
@@ -141,6 +166,8 @@ try { any p = Reflect.New("Plugin", []) } catch (ArgumentException e) { print(e.
 - In a native build, when a thread is busy in a long native function of a package (a compression, a render), the main program does not wait for it, as long as the thread passed only numbers, strings, buffers or number arrays of its own. See [natives of packages](docs/packages/natives.html).
 - A string or lambda that a thread reads from the globals belongs to the thread. If the main program replaces it meanwhile, the thread keeps working with its own copy.
 - **Global byte and word buffers are shared memory**: every thread reads and writes their elements directly, with no section and no job. Their memory is never freed while a thread is still accessing it. Once a buffer is destroyed, every thread gets the `DestroyedException` on its next access. See [Global buffers](docs/language/15-threads-and-actors.html#global-buffers-shared-memory).
+- `Sleep`, `Receive` with a limit and `await` of the main program come back on time, also while the tasks of the pool are busy computing.
+- A number array sent through a channel with `Send(take a)` is handed over as it is - receiving 2 million floats takes microseconds, as for a byte buffer.
 - Arrays and objects of the globals are just as safe: if the main program deletes one while a thread reads it, the thread's next access is the `DestroyedException`, never freed memory. See [Global variables](docs/language/15-threads-and-actors.html#global-variables).
 
 ```fire
@@ -158,7 +185,7 @@ print(frame[0] + frame[1])          // 30
 
 #### Faster
 
-`StringBuilder` keeps its text in one growing character buffer and writes numbers into it directly, digit by digit ([Strings](docs/language/06-strings.html#joining)). The VM stores `bool` arrays as one byte per element, and new arrays take memory only on first use. Its interpreter loop is tighter too.
+`StringBuilder` keeps its text in one growing character buffer and writes numbers into it directly, digit by digit ([Strings](docs/language/06-strings.html#joining)). Native programs take small objects from a pool of their own, lists grow by half instead of doubling, and buffers only take memory where they are written. The VM stores `bool` arrays as one byte per element, and new arrays take memory only on first use. Its interpreter loop is tighter too.
 
 Also new since alpha-2610: channels between threads, `await [ ... ]` for several calls at once, fire threads as light tasks on a pool of system threads, conditional access `a?.b` / `a??.b`, and expression trees (`lambda expression<T>`). The type checker has new warnings and errors `TC018` to `TC034` ([error codes](docs/tools/errors.html)). The whole [language reference](docs/language/index.html) is up to date.
 
@@ -177,43 +204,43 @@ fire was built natively with [forge](docs/tools/forge.html) in both modes. **REL
 
 | Language | fib | sieve | mandelbrot | objects | hashmap | strings |
 |---|---|---|---|---|---|---|
-| C | 0.207 | 0.323 | 0.339 | 0.326 | 0.257 | 0.284 |
-| Rust | 0.358 | 0.354 | 0.336 | 0.238 | 0.315 | 0.094 |
-| **fire native PERFORMANCE** | **0.195** | **0.888** | **0.334** | **1.205** | **0.871** | **0.344** |
-| **fire native RELEASE** | **0.176** | **1.104** | **0.336** | **1.487** | **1.012** | **0.329** |
-| Go | 0.593 | 0.365 | 0.342 | 0.816 | 0.463 | 0.764 |
-| Java | 0.613 | 0.426 | 0.377 | 0.369 | 0.586 | 0.218 |
-| C# | 0.591 | 0.404 | 0.363 | 0.610 | 0.279 | 0.165 |
-| JavaScript | 1.149 | 0.509 | 0.383 | 1.085 | 0.604 | 1.425 |
-| Python | 12.857 | 7.164 | 9.769 | 3.416 | 0.455 | 0.635 |
-| Ruby | 10.361 | 11.012 | 15.536 | 2.056 | 1.022 | 0.658 |
-| PHP | 5.829 | 5.814 | 3.785 | 4.047 | 0.186 | 0.276 |
+| C | 0.198 | 0.357 | 0.341 | 0.297 | 0.332 | 0.296 |
+| Rust | 0.456 | 0.392 | 0.349 | 0.275 | 0.355 | 0.166 |
+| **fire native PERFORMANCE** | **0.184** | **1.039** | **0.348** | **1.025** | **0.983** | **0.275** |
+| **fire native RELEASE** | **0.190** | **1.256** | **0.346** | **1.304** | **1.286** | **0.274** |
+| Go | 0.654 | 0.343 | 0.361 | 0.878 | 0.578 | 0.668 |
+| Java | 0.628 | 0.463 | 0.422 | 0.352 | 0.550 | 0.173 |
+| C# | 0.629 | 0.385 | 0.392 | 0.628 | 0.296 | 0.212 |
+| JavaScript | 1.361 | 0.506 | 0.398 | 1.057 | 0.611 | 1.230 |
+| Python | 13.866 | 8.191 | 10.681 | 3.450 | 0.607 | 0.665 |
+| Ruby | 10.816 | 11.874 | 16.043 | 2.578 | 1.341 | 0.863 |
+| PHP | 8.270 | 6.623 | 4.095 | 4.491 | 0.194 | 0.391 |
 
 Peak memory (MB):
 
 | Language | fib | sieve | mandelbrot | objects | hashmap | strings |
 |---|---|---|---|---|---|---|
 | C | 1.6 | 20.6 | 1.6 | 192.0 | 105.3 | 34.0 |
-| Rust | 2.2 | 20.9 | 2.2 | 192.6 | 104.1 | 34.4 |
-| **fire native PERFORMANCE** | **1.4** | **20.8** | **1.4** | **513.7** | **125.8** | **194.5** |
-| **fire native RELEASE** | **1.4** | **20.7** | **1.4** | **561.7** | **125.8** | **194.5** |
-| Go | 1.7 | 21.1 | 1.8 | 178.1 | 98.1 | 102.9 |
-| Java | 39.3 | 59.6 | 39.7 | 283.5 | 315.1 | 119.5 |
-| C# | 27.5 | 47.2 | 28.1 | 261.3 | 144.3 | 160.6 |
-| JavaScript | 47.7 | 67.8 | 49.9 | 422.2 | 161.6 | 509.6 |
+| Rust | 2.2 | 21.0 | 2.2 | 192.6 | 104.2 | 34.4 |
+| **fire native PERFORMANCE** | **1.4** | **20.6** | **1.4** | **384.6** | **125.8** | **131.1** |
+| **fire native RELEASE** | **1.4** | **20.6** | **1.4** | **407.9** | **125.8** | **131.1** |
+| Go | 1.8 | 21.1 | 1.8 | 188.9 | 96.9 | 103.0 |
+| Java | 39.0 | 59.4 | 39.8 | 281.4 | 317.8 | 119.7 |
+| C# | 27.4 | 47.0 | 28.0 | 286.6 | 144.3 | 160.6 |
+| JavaScript | 47.7 | 68.1 | 49.9 | 423.2 | 161.8 | 503.6 |
 | Python | 10.7 | 48.7 | 10.8 | 585.0 | 216.3 | 310.9 |
-| Ruby | 18.8 | 324.1 | 19.1 | 283.8 | 94.7 | 54.3 |
-| PHP | 31.2 | 641.3 | 31.2 | 571.3 | 110.7 | 94.3 |
+| Ruby | 18.9 | 324.0 | 19.1 | 283.8 | 94.7 | 54.3 |
+| PHP | 31.0 | 641.4 | 31.2 | 571.2 | 110.8 | 94.4 |
 
 Where fire is plain computation, it is as fast as C: fib and mandelbrot compile to C functions on C numbers. It falls behind where its runtime does the work:
 
-- **sieve**: 2.7x slower than C
-- **objects**: 3.7x slower than C, using 514 MB where C needs 192 MB
-- **hashmap**: 3.4x slower than C
+- **sieve**: 2.9x slower than C
+- **objects**: 3.5x slower than C, using 385 MB where C needs 192 MB (Java 281, C# 287)
+- **hashmap**: 3.0x slower than C
 
-Strings are 1.2x C, faster than Go and JavaScript but slower than Rust, C#, Java and PHP. They take more memory than in C, partly because fire's characters are 16 bits wide. The run-time checks of RELEASE cost nothing on fib, mandelbrot and strings, and 16-24 % on sieve, objects and hashmap.
+Strings are as fast as C and faster than Go and JavaScript, but slower than Rust, Java and C#. They take 131 MB - less than C# (161 MB), more than Go (103 MB) and much more than C, partly because fire's characters are 16 bits wide. The run-time checks of RELEASE cost nothing on fib, mandelbrot and strings, and 21-31 % on sieve, objects and hashmap.
 
-**Since our first measurement on November 15**, native strings went from 2.2 s and 729 MB to 0.34 s and 195 MB, thanks to the new `StringBuilder`. RELEASE objects went from 1.95 s to 1.49 s. The VM got 36-95 % faster, but it is still far slower than the native build. It is the place to develop and debug; for speed, build natively.
+**Since our first measurement on November 15**, native strings went from 2.2 s and 729 MB to 0.27 s and 131 MB, thanks to the new `StringBuilder`. Native objects went from 1.25 s and 514 MB to 1.03 s and 385 MB (RELEASE: from 1.95 s to 1.30 s). The VM got 36-95 % faster, but it is still far slower than the native build. It is the place to develop and debug; for speed, build natively.
 
 #### Small programs
 
@@ -222,11 +249,11 @@ Size is where native fire shines. A hello world is a stripped ELF that needs not
 | Language | Hello world | Needs |
 |---|---|---|
 | C (gcc -O2 -s) | 14.5 KB | libc |
-| **fire native PERFORMANCE** | **18.6 KB** | **libc** |
+| **fire native PERFORMANCE** | **22.7 KB** | **libc** |
 | **fire native RELEASE** | **22.7 KB** | **libc** |
 | Rust (rustc -O, stripped) | 343 KB | libc |
 | Go | 2.2 MB | - |
 
 Java, C#, JavaScript, Python, Ruby and PHP need their runtime installed.
 
-**How we measured.** All runs used one cloud VM (4 vCPUs, Intel Xeon at 2.1 GHz, Linux), shared with other work, and measured in a quiet window. Each number is the median of 3 runs, with the peak memory taken as the max RSS of the process. Every program printed the same checksum in every language. The C programs were built with gcc 13.3 `-O2` (the hashmap is a small open-addressing table, since C has none), as was the C that forge generates. The other toolchains were Rust 1.97 (`rustc -O`), Go 1.24.7, OpenJDK 21.0.12, .NET 10.0.14 (Release build), Node.js 22.23.4, Python 3.13.18, Ruby 3.3.6 and PHP 8.3.6 (CLI, without opcache), each with default settings. fire was at commit 864e6985. The hot loops use `defined int` - without it, fib and mandelbrot run just as fast, because the compiler derives it. Treat differences under about 15 % as noise.
+**How we measured.** All runs used one cloud VM (4 vCPUs, Intel Xeon at 2.1 GHz, Linux), shared with other work, and measured in one quiet window on November 17 (somewhat slower overall than earlier windows). Each number is the median of 3 runs, with the peak memory taken as the max RSS of the process. Every program printed the same checksum in every language. The C programs were built with gcc 13.3 `-O2` (the hashmap is a small open-addressing table, since C has none), as was the C that forge generates. The other toolchains were Rust 1.97 (`rustc -O`), Go 1.24.7, OpenJDK 21.0.12, .NET 10.0.14 (Release build), Node.js 22.23.4, Python 3.13.18, Ruby 3.3.6 and PHP 8.3.6 (CLI, without opcache), each with default settings. fire was at commit bcbb58c9. The hot loops use `defined int` - without it, fib and mandelbrot run just as fast, because the compiler derives it. Treat differences under about 15 % as noise.
