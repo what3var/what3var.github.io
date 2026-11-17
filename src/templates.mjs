@@ -1,7 +1,7 @@
 import path from "node:path";
 import hljs from "highlight.js";
 import fs from "node:fs";
-import { site, nav, toolchain, heroSlides, heroInterval, newsOnHome } from "./site.config.mjs";
+import { site, nav, toolchain, heroSlides, heroInterval, newsOnHome, pitch, whyFire, platforms, platformFootnote, honest, buildWhat, targets } from "./site.config.mjs";
 import { biscuitSvg } from "./biscuit.mjs";
 
 export const esc = (s = "") => String(s)
@@ -36,6 +36,14 @@ const ICONS = {
   arrow: '<path d="M5 12h14m-6-6 6 6-6 6"/>',
   bug: '<path d="M8 8V6a4 4 0 0 1 8 0v2"/><rect x="7" y="8" width="10" height="12" rx="5"/><path d="M12 12v8M3 13h4M17 13h4M4 19l3-2M20 19l-3-2M4 7l3 2M20 7l-3 2"/>',
   compass: '<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/>',
+  box: '<path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="m3 7.5 9 4.5 9-4.5M12 12v9"/>',
+  chip: '<rect x="7" y="7" width="10" height="10" rx="1.5"/><path d="M10 10h4v4h-4zM10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4"/>',
+  spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>',
+  desktop: '<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4M3 8h18"/>',
+  terminal: '<rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="m7 9 3 3-3 3M12 15h5"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3z"/>',
+  cube: '<path d="M12 3 4 7.5v9L12 21l8-4.5v-9z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/>',
+  floppy: '<path d="M4 4h13l3 3v13H4z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/>',
 };
 export const icon = (name, cls = "icon") =>
   `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] ?? ""}</svg>`;
@@ -121,9 +129,10 @@ export function fireKeywords(html) {
 }
 
 // highlights line by line, so lines outside `focus` ([first, last], 1-based) can be dimmed
-function codeLines(code, focus) {
+function codeLines(code, focus, language = "csharp") {
   return code.split("\n").map((l, i) => {
-    const html = fireKeywords(hljs.highlight(l, { language: "csharp" }).value) || " ";
+    const plain = hljs.highlight(l, { language }).value;
+    const html = (language === "csharp" ? fireKeywords(plain) : plain) || " ";
     const dim = focus && (i + 1 < focus[0] || i + 1 > focus[1]);
     return focus ? `<span class="ln${dim ? " dim" : ""}">${html}</span>` : html;
   }).join(focus ? "" : "\n");
@@ -177,7 +186,7 @@ export function home({ version, news, fireRoot }) {
         <a class="btn btn-primary" href="download.html">${icon("download")} Download ${esc(version)}</a>
         <a class="btn btn-ghost" href="explore.html">${icon("compass")} Explore</a>
       </div>
-      <p class="hero-meta">Windows · Linux · macOS — native targets incl. ESP32 &amp; FreeRTOS</p>
+      <p class="hero-meta">${platforms.map((p) => esc(p.name) + (p.star ? "*" : "")).join(" · ")}</p>
     </div>
     <div class="hero-code">
       <div class="slides slides-visual" data-slides="visual">${heroSlides.map((sl, i) => `
@@ -187,11 +196,43 @@ export function home({ version, news, fireRoot }) {
             <div class="window-bar"><span></span><span></span><span></span><em>${esc(sl.file)}</em></div>
             ${sl.shot
               ? `<img src="assets/shots/${path.basename(sl.shot)}" alt="${esc(sl.file)}" width="1917" height="1010">`
-              : `<pre><code class="hljs">${codeLines(sl.code, sl.focus)}</code></pre>`}
+              : `<pre><code class="hljs">${codeLines(sl.code, sl.focus, sl.lang)}</code></pre>`}
           </div>${sl.inset ? "</div>" : ""}
         </div>`).join("")}
         <canvas class="pixels" aria-hidden="true"></canvas>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="section why" id="why">
+  <div class="wrap">
+    <header class="section-head">
+      <p class="eyebrow">${esc(pitch.eyebrow)}</p>
+      <h2>${esc(pitch.title).replace(/\{(.+?)\}/, "<em>$1</em>")}</h2>
+      <p>${esc(pitch.text)}</p>
+    </header>
+    <div class="features why-grid">
+      ${whyFire.map((w) => `
+      <article class="feature why-card">
+        <div class="feature-icon">${icon(w.icon)}</div>
+        <p class="why-problem">${esc(w.problem)}</p>
+        <h3>${esc(w.title)}</h3>
+        <p>${esc(w.text)}</p>
+      </article>`).join("")}
+    </div>
+    <div class="platform-strip" aria-label="Platforms">
+      <ul>${platforms.map((p) => `<li>${esc(p.name)}${p.star ? "<sup>*</sup>" : ""}</li>`).join("")}</ul>
+      <p class="footnote">${esc(platformFootnote)}</p>
+    </div>
+  </div>
+</section>
+
+<section class="honest-band">
+  <div class="wrap">
+    <div class="honest">
+      <h2>${esc(honest.title)}</h2>
+      <p>${esc(honest.text)}</p>
     </div>
   </div>
 </section>
@@ -224,8 +265,22 @@ export function explore({ version, features, screenshots }) {
 <section class="page-head">
   <div class="wrap">
     <p class="eyebrow">Explore</p>
-    <h1>Everything that comes with fire</h1>
-    <p class="lead">A language, its compiler, an IDE and a package manager — built to work together, from a script on your desktop to a binary on an ESP32.</p>
+    <h1>Build what you <em>want</em>.</h1>
+    <p class="lead">A language, its compiler, an IDE and a package manager — made to work together, from a script on your desktop to a web server, a DOS game or a binary on an ESP32*.</p>
+  </div>
+</section>
+
+<section class="section section-tight" id="build">
+  <div class="wrap">
+    <div class="features build-grid">
+      ${buildWhat.map((b) => `
+      <article class="feature">
+        <div class="feature-icon">${icon(b.icon)}</div>
+        <h3>${esc(b.title)}</h3>
+        <p>${esc(b.text)}</p>
+        <p class="imports">${b.imports.map((i) => `<code>#import "${esc(i)}"</code>`).join(" ")}</p>
+      </article>`).join("")}
+    </div>
   </div>
 </section>
 
@@ -244,7 +299,7 @@ export function explore({ version, features, screenshots }) {
 <section class="section" id="features">
   <div class="wrap">
     <header class="section-head">
-      <p class="eyebrow">Why fire</p>
+      <p class="eyebrow">The language</p>
       <h2>Familiar syntax, deliberately different ideas.</h2>
       <p>Heavily leaning on C#, but some things are designed differently on purpose. Some are weird, others are beautiful — or simply dangerous.</p>
     </header>
@@ -259,12 +314,30 @@ export function explore({ version, features, screenshots }) {
   </div>
 </section>
 
-<section class="section section-alt" id="screenshots">
+<section class="section section-alt" id="targets">
+  <div class="wrap">
+    <header class="section-head">
+      <p class="eyebrow">Targets</p>
+      <h2>One codebase, many targets.</h2>
+      <p>The same program, built with <code>forge build -t &lt;target&gt;</code>. Where we have seen it run says the last column.</p>
+    </header>
+    <div class="table-wrap">
+      <table class="targets">
+        <thead><tr><th>Target</th><th>How</th><th>Seen running on</th></tr></thead>
+        <tbody>${targets.map((t) => `
+          <tr><td>${esc(t.name)}${t.tested === "*" ? "<sup>*</sup>" : ""}</td><td>${esc(t.how)}</td><td>${t.tested === "*" ? `<span class="muted">${esc(platformFootnote.replace(/^\* /, ""))}</span>` : esc(t.tested)}</td></tr>`).join("")}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="screenshots">
   <div class="wrap">
     <header class="section-head">
       <p class="eyebrow">spark</p>
       <h2>A cute little VS-style IDE.</h2>
-      <p>Built with .NET 10 and Avalonia. Debugger, designer, Markdown and raster editors, device panel — all in one window.</p>
+      <p>No setup marathon: install, open, F5. Debugger, designer, Markdown and raster editors, device panel — all in one window, built with .NET 10 and Avalonia.</p>
     </header>
     <div class="shots">${shots}
     </div>
@@ -292,7 +365,7 @@ export function explore({ version, features, screenshots }) {
 <section class="cta-band">
   <div class="wrap cta-band-inner">
     <img src="assets/logo.svg" alt="" width="36" height="48">
-    <div><h2>Just download it and have a look.</h2><p>Things went further than planned. 🔥</p></div>
+    <div><h2>Just download it and have a look.</h2><p>Things went further than planned. 🔥 Young, honest about it, and moving fast.</p></div>
     <a class="btn btn-primary" href="download.html">${icon("download")} Download ${esc(version)}</a>
   </div>
 </section>
