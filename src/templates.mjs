@@ -195,7 +195,7 @@ export function home({ version, news, fireRoot }) {
           <div class="window${sl.shot ? " window-shot" : ""}${sl.inset ? " window-sm" : ""}">
             <div class="window-bar"><span></span><span></span><span></span><em>${esc(sl.file)}</em></div>
             ${sl.shot
-              ? `<img src="assets/shots/${path.basename(sl.shot)}" alt="${esc(sl.file)}" width="1917" height="1010">`
+              ? `<img src="assets/shots/${path.basename(sl.shot)}" alt="${esc(sl.file)}" width="1920" height="1080">`
               : `<pre><code class="hljs">${codeLines(sl.code, sl.focus, sl.lang)}</code></pre>`}
           </div>${sl.inset ? "</div>" : ""}
         </div>`).join("")}
@@ -256,7 +256,7 @@ export function explore({ version, features, screenshots }) {
   const shots = screenshots.map((s, i) => `
       <figure class="shot${i === 0 ? " shot-wide" : ""}">
         <button type="button" class="shot-btn" data-lightbox="${i}">
-          <img src="assets/shots/${path.basename(s.file)}" alt="${esc(s.title)}" loading="lazy" width="1917" height="1005">
+          <img src="assets/shots/${path.basename(s.file)}" alt="${esc(s.title)}" loading="lazy" width="1920" height="1080">
         </button>
         <figcaption><strong>${esc(s.title)}</strong> ${esc(s.text)}</figcaption>
       </figure>`).join("");

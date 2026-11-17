@@ -211,8 +211,9 @@ export const screenshots = [
   { file: "screenshots/2.png", title: "Samples", text: "Runnable samples for the language and the libraries." },
   { file: "screenshots/3.png", title: "FXML designer", text: "Design windows and dialogs visually in .fxml markup." },
   { file: "screenshots/4.png", title: "Markdown editor", text: "Write and preview documentation right next to the code." },
-  { file: "screenshots/5.png", title: "Raster editor", text: "Edit bitmaps and sprites without leaving the IDE." },
-  { file: "screenshots/6.png", title: "scene3d package", text: "3D scenes from an ember package." },
+  { file: "screenshots/5.png", title: "Pixel editor", text: "Edit bitmaps and sprites without leaving the IDE." },
+  { file: "screenshots/6.png", title: "scene3d package", text: "A 3D scene running next to its code." },
+  { file: "screenshots/7.png", title: "Circuit editor", text: "Draw a schematic, simulate it live and use it from fire as a class." },
 ];
 
 // Documentation sections. Files are paths inside the fire repository;
