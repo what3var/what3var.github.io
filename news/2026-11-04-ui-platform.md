@@ -14,4 +14,4 @@ fire's windows no longer go through SDL. A new platform layer in C talks to X11,
 
 - **Tooltips** for every element (`button.ToolTip = "Saves everything"`), and the drawing helpers are there for your own programs: `FillRoundRect`, `DrawShadow`, `Blur`, `DrawMaterial`.
 
-The design notes are in [UI platform](docs/topics/ui-platform.html), the style and effects in [UI](docs/topics/ui.html).
+The design notes are in [UI platform](docs/ui/windows.html#where-the-windows-come-from), the style and effects in [UI](docs/ui/index.html).
