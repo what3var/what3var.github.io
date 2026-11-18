@@ -197,7 +197,8 @@ async function main() {
     ?? "alpha";
   const news = loadNews(path.join(ROOT, "news"), releases, new Marked({ gfm: true }));
   write("index.html", T.home({ version, news, fireRoot: src }));
-  write("explore.html", T.explore({ version, features, screenshots }));
+  // (only the screenshots the fire checkout has: a new one shows once it is on fire's default branch)
+  write("explore.html", T.explore({ version, features, screenshots: screenshots.filter((s) => fs.existsSync(path.join(src, s.file))) }));
   write("news.html", T.newsPage({ news }));
   write("download.html", T.download({ releases, version }));
   // 404.html is served for any path, so it needs absolute links. BASE_PATH is
