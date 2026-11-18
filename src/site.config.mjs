@@ -96,6 +96,9 @@ export const buildWhat = [
   { icon: "globe", title: "Web", text: "An HTTP server with a Blazor-inspired page framework: your FXML views as web pages, their events over a WebSocket.", imports: ["http", "http.pages", "data"] },
   { icon: "devices", title: "Devices", text: "GPIO, I²C, SPI, USB and serial ports — and an ESP32* on Wi-Fi.", imports: ["gpio", "i2c", "wifi"] },
   { icon: "cube", title: "Games & 3D", text: "Scenes, terrain, effects and physics — from the GPU down to a 16-bit software renderer.", imports: ["scene3d", "scene3d.physics"] },
+  { icon: "brain", title: "AI, on your machine", text: "A small language model on the CPU, agents with tools, MCP client and server — nothing leaves the computer.", imports: ["ai", "ai.agent", "mcp"] },
+  { icon: "wave", title: "Circuits & sound", text: "Simulate circuits and hear them, play tracker modules, record and output audio.", imports: ["circuits", "audio", "tracker"] },
+  { icon: "embed", title: "Inside your app", text: "Host fire as a scripting language in a .NET application, or give a package natives in C or C++.", chips: ["C# host", "natives in C / C++"] },
   { icon: "floppy", title: "Retro", text: "DOS and Windows 3.x, for retro fans who like beautiful code.", imports: ["dos", "machine", "windows"] },
 ];
 

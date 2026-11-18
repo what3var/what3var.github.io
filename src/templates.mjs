@@ -43,6 +43,8 @@ const ICONS = {
   terminal: '<rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="m7 9 3 3-3 3M12 15h5"/>',
   globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3z"/>',
   cube: '<path d="M12 3 4 7.5v9L12 21l8-4.5v-9z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/>',
+  brain: '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1V5a2 2 0 0 0-3-1zM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1"/>',
+  wave: '<path d="M2 12h3l2-6 3 12 3-9 2 6 2-3h5"/>',
   floppy: '<path d="M4 4h13l3 3v13H4z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/>',
 };
 export const icon = (name, cls = "icon") =>
@@ -278,7 +280,7 @@ export function explore({ version, features, screenshots }) {
         <div class="feature-icon">${icon(b.icon)}</div>
         <h3>${esc(b.title)}</h3>
         <p>${esc(b.text)}</p>
-        <p class="imports">${b.imports.map((i) => `<code>#import "${esc(i)}"</code>`).join(" ")}</p>
+        <p class="imports">${(b.imports ?? []).map((i) => `<code>#import "${esc(i)}"</code>`).concat((b.chips ?? []).map((c) => `<code>${esc(c)}</code>`)).join(" ")}</p>
       </article>`).join("")}
     </div>
   </div>
